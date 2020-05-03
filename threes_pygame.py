@@ -1,11 +1,11 @@
 import random
 import pygame
 import sys
+import copy
 
-# threes python版 v1.0.9
+# threes python版 v1.1
 """
-待更新： 预览
-未知可否更新： 背景图片，动画
+待更新： 背景图片，动画，按钮
 """
 
 
@@ -33,8 +33,12 @@ def run():
 
 
 def output():
-    render()
     get_next_num()
+    render(board)
+    draw_next_num()
+
+
+def draw_next_num():
     font = pygame.font.SysFont('microsoftyaheimicrosoftyaheiui', 40)
     next_text = font.render("下一个", 2, (150, 150, 150))
     screen.blit(next_text, (250 - next_text.get_width()/2, 500 - next_text.get_height() / 2))
@@ -122,136 +126,156 @@ def rate_control():
         stage_array.extend([-2]*(minus_one - minus_two))
 
 
-def move_left():
+def move_left(a_board):
     empty = []
     num = []
+    num2 = []
     is_moved = False
-    for i, array in enumerate(board):
+    for i, array in enumerate(a_board):
         for j, tile in enumerate(array):
             if j < 3:
-                if tile == -3 and board[i][j+1] != -3:
-                    board[i][j] = board[i][j+1]
-                    board[i][j+1] = -3
+                if tile == -3 and a_board[i][j + 1] != -3:
+                    a_board[i][j] = a_board[i][j + 1]
+                    a_board[i][j + 1] = -3
                     is_moved = True
+                    num2.append(i)
                 else:
-                    if board[i][j] + board[i][j+1] == -3 and board[i][j] * board[i][j+1] > 0:
-                        board[i][j] = 0
-                        board[i][j+1] = -3
+                    if a_board[i][j] + a_board[i][j + 1] == -3 and a_board[i][j] * a_board[i][j + 1] > 0:
+                        a_board[i][j] = 0
+                        a_board[i][j + 1] = -3
                         num.append(i)
                         is_moved = True
-                    elif board[i][j] == board[i][j+1] and board[i][j] >= 0:
-                        board[i][j] = board[i][j] + 1
-                        board[i][j+1] = -3
+                    elif a_board[i][j] == a_board[i][j + 1] and a_board[i][j] >= 0:
+                        a_board[i][j] = a_board[i][j] + 1
+                        a_board[i][j + 1] = -3
                         num.append(i)
                         is_moved = True
     for i in range(4):
-        if board[i][3] == -3:
+        if a_board[i][3] == -3:
             if i in num:
                 for a in range(9):
                     empty.append([i, 3])
+            elif i in num:
+                for a in range(3):
+                    empty.append([i, 3])
             else:
                 empty.append([i, 3])
-    if is_moved:
+    if is_moved and a_board == board:
         add_tile(empty)
         output()
     end_game()
 
 
-def move_down():
+def move_down(a_board):
     empty = []
     num = []
+    num2 = []
     is_moved = False
     for i in range(3, 0, -1):
-        for j, tile in enumerate(board[i]):
-            if tile == -3 and board[i-1][j] != -3:
-                board[i][j] = board[i-1][j]
-                board[i-1][j] = -3
+        for j, tile in enumerate(a_board[i]):
+            if tile == -3 and a_board[i - 1][j] != -3:
+                a_board[i][j] = a_board[i - 1][j]
+                a_board[i - 1][j] = -3
                 is_moved = True
+                num2.append(j)
             else:
-                if board[i][j] + board[i-1][j] == -3 and board[i][j] * board[i-1][j] > 0:
-                    board[i][j] = 0
-                    board[i-1][j] = -3
+                if a_board[i][j] + a_board[i - 1][j] == -3 and a_board[i][j] * a_board[i - 1][j] > 0:
+                    a_board[i][j] = 0
+                    a_board[i - 1][j] = -3
                     num.append(j)
                     is_moved = True
-                elif board[i][j] == board[i-1][j] and board[i][j] >= 0:
-                    board[i][j] = board[i][j] + 1
-                    board[i-1][j] = -3
+                elif a_board[i][j] == a_board[i - 1][j] and a_board[i][j] >= 0:
+                    a_board[i][j] = a_board[i][j] + 1
+                    a_board[i - 1][j] = -3
                     num.append(j)
                     is_moved = True
     for j in range(4):
-        if board[0][j] == -3:
+        if a_board[0][j] == -3:
             if j in num:
                 for a in range(9):
                     empty.append([0, j])
+            elif j in num2:
+                for a in range(3):
+                    empty.append([0, j])
             else:
                 empty.append([0, j])
-    if is_moved:
+    if is_moved and a_board == board:
         add_tile(empty)
         output()
     end_game()
 
 
-def move_right():
+def move_right(a_board):
     empty = []
     num = []
+    num2 = []
     is_moved = False
     for i in range(0, 4):   # 1，2合成3，相同合成更高一级
         for j in range(3, 0, -1):
-            if board[i][j] == -3 and board[i][j-1] != -3:
-                board[i][j], board[i][j-1] = board[i][j-1], board[i][j]
+            if a_board[i][j] == -3 and a_board[i][j - 1] != -3:
+                a_board[i][j], a_board[i][j - 1] = a_board[i][j - 1], a_board[i][j]
                 is_moved = True
+                num2.append(i)
             else:
-                if board[i][j] + board[i][j-1] == -3 and board[i][j] * board[i][j-1] > 0:
-                    board[i][j] = 0
-                    board[i][j-1] = -3
+                if a_board[i][j] + a_board[i][j - 1] == -3 and a_board[i][j] * a_board[i][j - 1] > 0:
+                    a_board[i][j] = 0
+                    a_board[i][j - 1] = -3
                     num.append(i)
                     is_moved = True
-                elif board[i][j] == board[i][j-1] and board[i][j] >= 0:
-                    board[i][j] = board[i][j] + 1
-                    board[i][j-1] = -3
+                elif a_board[i][j] == a_board[i][j - 1] and a_board[i][j] >= 0:
+                    a_board[i][j] = a_board[i][j] + 1
+                    a_board[i][j - 1] = -3
                     num.append(i)
                     is_moved = True
     for i in range(4):
-        if board[i][0] == -3:
+        if a_board[i][0] == -3:
             if i in num:
                 for a in range(9):
                     empty.append([i, 0])
+            elif i in num:
+                for a in range(3):
+                    empty.append([i, 0])
             else:
                 empty.append([i, 0])
-    if is_moved:
+    if is_moved and a_board == board:
         add_tile(empty)
         output()
     end_game()
 
 
-def move_up():
+def move_up(a_board):
     empty = []
     num = []
+    num2 = []
     is_moved = False
     for i in range(0, 3):   # 1，2合成3，相同合成更高一级
         for j in range(0, 4):
-            if board[i][j] == -3 and board[i+1][j] != -3:
-                board[i][j], board[i+1][j] = board[i+1][j], board[i][j]
+            if a_board[i][j] == -3 and a_board[i + 1][j] != -3:
+                a_board[i][j], a_board[i + 1][j] = a_board[i + 1][j], a_board[i][j]
                 is_moved = True
+                num2.append(j)
             else:
-                if board[i][j] + board[i+1][j] == -3 and board[i+1][j] * board[i][j] > 0:
-                    board[i][j] = 0
-                    board[i+1][j] = -3
+                if a_board[i][j] + a_board[i + 1][j] == -3 and a_board[i + 1][j] * a_board[i][j] > 0:
+                    a_board[i][j] = 0
+                    a_board[i + 1][j] = -3
                     num.append(j)
                     is_moved = True
-                elif board[i][j] == board[i+1][j] and board[i][j] >= 0:
-                    board[i][j] = board[i][j] + 1
-                    board[i+1][j] = -3
+                elif a_board[i][j] == a_board[i + 1][j] and a_board[i][j] >= 0:
+                    a_board[i][j] = a_board[i][j] + 1
+                    a_board[i + 1][j] = -3
                     num.append(j)
                     is_moved = True
     for j in range(4):
-        if board[3][j] == -3:
+        if a_board[3][j] == -3:
             if j in num:
                 for a in range(9):
                     empty.append([3, j])
+            if j in num:
+                for a in range(3):
+                    empty.append([3, j])
             else:
                 empty.append([3, j])
-    if is_moved:
+    if is_moved and a_board == board:
         add_tile(empty)
         output()
     end_game()
@@ -259,6 +283,7 @@ def move_up():
 
 def key_control():
     global running
+    key_list = pygame.key.get_pressed()
     for event in pygame.event.get():    # 玄学错误 列表二维坐标颠倒
         if event.type == pygame.QUIT:
             running = False
@@ -266,22 +291,52 @@ def key_control():
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_a:
-                move_up()
+                if not key_list[pygame.K_LSHIFT]:
+                    move_up(board)
+                else:
+                    preview("up")
             if event.key == pygame.K_d:
-                move_down()
+                if not key_list[pygame.K_LSHIFT]:
+                    move_down(board)
+                else:
+                    preview("down")
             if event.key == pygame.K_w:
-                move_left()
+                if not key_list[pygame.K_LSHIFT]:
+                    move_left(board)
+                else:
+                    preview("left")
             if event.key == pygame.K_s:
-                move_right()
+                if not key_list[pygame.K_LSHIFT]:
+                    move_right(board)
+                else:
+                    preview("right")
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LSHIFT:
+                render(board)
+                draw_next_num()
 
 
-def render():
+def preview(direction):
+    copy_board = copy.deepcopy(board)
+    if direction == "left":
+        move_left(copy_board)
+    if direction == "down":
+        move_down(copy_board)
+    if direction == "right":
+        move_right(copy_board)
+    if direction == "up":
+        move_up(copy_board)
+    render(copy_board)
+    draw_next_num()
+
+
+def render(a_board):
     global text     # 非全局变量时 weak warning 运行正常
     font = pygame.font.SysFont('comicsans', 61)
     screen.fill((240, 240, 206))
     rectangle = pygame.Rect(50, 50, 400, 400)
     pygame.draw.rect(screen, (161, 210, 212), rectangle)
-    for i, array in enumerate(board):  # i 序号 array 数组
+    for i, array in enumerate(a_board):  # i 序号 array 数组
         for j, tile in enumerate(array):  # j 序号 tile 元素
             if tile == -3:
                 color = (131, 162, 163)
@@ -344,7 +399,7 @@ def score():
 
 def end_game():
     if is_end():
-        render()
+        render(board)
         font = pygame.font.SysFont('microsoftyaheimicrosoftyaheiui', 40)
         next_text = font.render("动不了了", 2, (150, 150, 150))
         screen.blit(next_text, (250 - next_text.get_width()/2, 550 - next_text.get_height() / 2))
