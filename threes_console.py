@@ -6,6 +6,7 @@ import random
 
 running = True
 stage = 0
+stage_array = []
 
 
 def main():
@@ -31,7 +32,10 @@ def output():
             print("%4s" % turn(tile), end="    ")
         print("\n")
         get_next_num()
-    print("下一个数是:" + turn(stage))
+    if stage <= 0:
+        print("下一个数是:" + turn(stage))
+    else:
+        print("下一个数是:" + " ".join(turn(k)for k in stage_array))
 
 
 def turn(num):
@@ -67,49 +71,70 @@ def add_tile(situation):
 
 
 def get_next_num():
-    global stage
+    global stage, stage_array
+    stage_array = []
     if judge_max_number(board) > 3:
-        r_num = random.randrange(1, 5)
+        r_num = random.randrange(330)
     else:
-        r_num = random.randrange(1, 4)
-    if r_num == 1:
-        stage = -1
-    elif r_num == 2:
-        stage = -2
-    elif r_num == 3:
-        stage = 0  # -1对应1，-2对应2，0对应3
+        r_num = random.randrange(315)
+    if r_num < 105:
+        stage_array.append(-1)
+        rate_control()
+    elif r_num < 210:
+        stage_array.append(-2)
+        rate_control()
+    elif r_num < 315:
+        stage_array.append(0)  # -1对应1，-2对应2，0对应3
     else:
         new_stage = judge_max_number(board) - 3
-        if new_stage < 3:
-            stage = random.randrange(1, 1 + new_stage)  # 当stage为4或5，只能产生6或6，12
+        if new_stage == 1:
+            stage_array.append(1)
+        elif new_stage == 2:
+            stage_array.extend([1, 2])
         else:
             new_stage -= 2  # 当stage大于等于6，可能产生多组3个数，先从中挑一组
-            stage = random.randrange(1, 1 + new_stage)
-            stage += random.randrange(0, 3)
+            r_stage = random.randrange(new_stage)
+            stage_array.extend([r_stage + 1, r_stage + 2, r_stage + 3])
+    stage = random.choice(stage_array)
+
+
+def rate_control():
+    minus_one = 0
+    minus_two = 0
+    for i in board:
+        for j in i:
+            if j == -1:
+                minus_one += 1
+            elif j == -2:
+                minus_two += 1
+    if minus_two > minus_one:
+        stage_array.extend([-1]*(minus_two - minus_one))
+    else:
+        stage_array.extend([-2]*(minus_one - minus_two))
 
 
 def move_left():
     empty = []
     num = []
     is_moved = False
-    for i in range(0, 4):   # 1，2合成3，相同合成更高一级
-        for j in range(1, 4):
-            if is_wall(i, j, "left"):
-                if board[i][j] + board[i][j - 1] == -3 and board[i][j] * board[i][j - 1] > 0:
-                    board[i][j - 1] = 0
-                    board[i][j] = -3
-                    num.append(i)
-                elif board[i][j] == board[i][j - 1] and board[i][j] >= 0:
-                    board[i][j - 1] = board[i][j - 1] + 1
-                    board[i][j] = -3
-                    num.append(i)
-    for i in range(0, 4):
-        for j in range(0, 3):
-            if board[i][j] == -3:
-                board[i][j] = board[i][j + 1]
-                board[i][j + 1] = -3
-            if board[i][j] != -3:
-                is_moved = True
+    for i, array in enumerate(board):
+        for j, tile in enumerate(array):
+            if j < 3:
+                if tile == -3 and board[i][j+1] != -3:
+                    board[i][j] = board[i][j+1]
+                    board[i][j+1] = -3
+                    is_moved = True
+                else:
+                    if board[i][j] + board[i][j+1] == -3 and board[i][j] * board[i][j+1] > 0:
+                        board[i][j] = 0
+                        board[i][j+1] = -3
+                        num.append(i)
+                        is_moved = True
+                    elif board[i][j] == board[i][j+1] and board[i][j] >= 0:
+                        board[i][j] = board[i][j] + 1
+                        board[i][j+1] = -3
+                        num.append(i)
+                        is_moved = True
     for i in range(4):
         if board[i][3] == -3:
             if i in num:
@@ -120,30 +145,30 @@ def move_left():
     if is_moved:
         add_tile(empty)
         output()
+    end_game()
 
 
 def move_down():
     empty = []
     num = []
     is_moved = False
-    for i in range(3, 0, -1):   # 1，2合成3，相同合成更高一级
-        for j in range(0, 4):
-            if is_wall(i, j, "down"):
+    for i in range(3, 0, -1):
+        for j, tile in enumerate(board[i]):
+            if tile == -3 and board[i-1][j] != -3:
+                board[i][j] = board[i-1][j]
+                board[i-1][j] = -3
+                is_moved = True
+            else:
                 if board[i][j] + board[i-1][j] == -3 and board[i][j] * board[i-1][j] > 0:
                     board[i][j] = 0
                     board[i-1][j] = -3
                     num.append(j)
+                    is_moved = True
                 elif board[i][j] == board[i-1][j] and board[i][j] >= 0:
                     board[i][j] = board[i][j] + 1
                     board[i-1][j] = -3
                     num.append(j)
-    for i in range(2, -1, -1):
-        for j in range(0, 4):
-            if board[i+1][j] == -3:
-                board[i+1][j] = board[i][j]
-                board[i][j] = -3
-            if board[i+1][j] != -3:
-                is_moved = True
+                    is_moved = True
     for j in range(4):
         if board[0][j] == -3:
             if j in num:
@@ -154,6 +179,7 @@ def move_down():
     if is_moved:
         add_tile(empty)
         output()
+    end_game()
 
 
 def move_right():
@@ -162,22 +188,20 @@ def move_right():
     is_moved = False
     for i in range(0, 4):   # 1，2合成3，相同合成更高一级
         for j in range(3, 0, -1):
-            if is_wall(i, j, "right"):
+            if board[i][j] == -3 and board[i][j-1] != -3:
+                board[i][j], board[i][j-1] = board[i][j-1], board[i][j]
+                is_moved = True
+            else:
                 if board[i][j] + board[i][j-1] == -3 and board[i][j] * board[i][j-1] > 0:
                     board[i][j] = 0
                     board[i][j-1] = -3
                     num.append(i)
+                    is_moved = True
                 elif board[i][j] == board[i][j-1] and board[i][j] >= 0:
                     board[i][j] = board[i][j] + 1
                     board[i][j-1] = -3
                     num.append(i)
-    for i in range(0, 4):
-        for j in range(2, -1, -1):
-            if board[i][j+1] == -3:
-                board[i][j+1] = board[i][j]
-                board[i][j] = -3
-            if board[i][j + 1] != -3:
-                is_moved = True
+                    is_moved = True
     for i in range(4):
         if board[i][0] == -3:
             if i in num:
@@ -188,6 +212,7 @@ def move_right():
     if is_moved:
         add_tile(empty)
         output()
+    end_game()
 
 
 def move_up():
@@ -196,23 +221,21 @@ def move_up():
     is_moved = False
     for i in range(0, 3):   # 1，2合成3，相同合成更高一级
         for j in range(0, 4):
-            if is_wall(i, j, "up"):
+            if board[i][j] == -3 and board[i+1][j] != -3:
+                board[i][j], board[i+1][j] = board[i+1][j], board[i][j]
+                is_moved = True
+            else:
                 if board[i][j] + board[i+1][j] == -3 and board[i+1][j] * board[i][j] > 0:
                     board[i][j] = 0
                     board[i+1][j] = -3
                     num.append(j)
+                    is_moved = True
                 elif board[i][j] == board[i+1][j] and board[i][j] >= 0:
                     board[i][j] = board[i][j] + 1
                     board[i+1][j] = -3
                     num.append(j)
-    for i in range(1, 4):
-        for j in range(0, 4):
-            if board[i-1][j] == -3:
-                board[i-1][j] = board[i][j]
-                board[i][j] = -3
-            if board[i - 1][j] != -3:
-                is_moved = True
-    for j in range(4):      # 如果该行/列有合成，新块生成在该行/列的可能性增加9倍
+                    is_moved = True
+    for j in range(4):
         if board[3][j] == -3:
             if j in num:
                 for a in range(9):
@@ -222,6 +245,48 @@ def move_up():
     if is_moved:
         add_tile(empty)
         output()
+    end_game()
+
+
+def is_end():
+    flag = False
+    for i in board:
+        for j in i:
+            if j == -3:
+                flag = True
+    if flag:
+        return False
+    else:
+        for i in range(3):
+            for j in range(4):
+                if board[i][j] == board[i+1][j] and board[i][j] > -1:
+                    return False
+                else:
+                    if board[i][j] + board[i + 1][j] == -3 and board[i + 1][j] * board[i][j] > 0:
+                        return False
+        for i in range(4):
+            for j in range(3):
+                if board[i][j] == board[i][j+1] and board[i][j] > -1:
+                    return False
+                else:
+                    if board[i][j] + board[i][j+1] == -3 and board[i][j+1] * board[i][j] > 0:
+                        return False
+        return True
+
+
+def end_game():
+    if is_end():
+        print("动不了了")
+        score()
+
+
+def score():
+    sum_score = 0
+    for i in board:
+        for j in i:
+            if j >= 0:
+                sum_score += 3 ** (j + 1)
+    print("您的得分:" + str(sum_score))
 
 
 def key_control():
@@ -231,37 +296,6 @@ def key_control():
     keyboard.add_hotkey(32, move_right)
     keyboard.add_hotkey(17, move_up)
     keyboard.wait()
-
-
-def is_wall(i, j, direction):
-    if direction == "left":
-        if j == 1:
-            return True
-        elif j > 1 and board[i][j-1] != -3:
-            return True
-        else:
-            return False
-    elif direction == "down":
-        if i == 3:
-            return True
-        elif i < 3 and board[i+1][j] != -3:
-            return True
-        else:
-            return False
-    elif direction == "right":
-        if j == 3:
-            return True
-        elif j < 3 and board[i][j+1] != -3:
-            return True
-        else:
-            return False
-    elif direction == "up":
-        if i == 0:
-            return True
-        elif i > 0 and board[i-1][j] != -3:
-            return True
-        else:
-            return False
 
 
 if __name__ == "__main__":
