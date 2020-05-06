@@ -148,7 +148,7 @@ def add_tile(situation):
     board[chosen[0]][chosen[1]] = stage
 
 
-def get_next_num():     # 1，2，3，3以上的数概率为105:105:105:15,当最大数高于48时开始产生3以上的数
+def get_next_num():     # 1，2，3，3以上的数概率为105:105:105:15,当最大数大于等于48时开始产生3以上的数
     global stage, stage_array
     stage_array = []
     if judge_max_number(board) > 3:
