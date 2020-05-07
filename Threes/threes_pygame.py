@@ -9,11 +9,10 @@ import copy
 W A S D键控制，shift + W A S D 键预览，ESC键退出，菜单中重试或结束后按回车键重玩，统计只是个装饰
 """
 
-
 running = True
 stage = 0
 text = 0
-board = [[-3 for i in range(4)]for j in range(4)]
+board = [[-3 for i in range(4)] for j in range(4)]
 stage_array = []
 screen = pygame.display.set_mode((360, 720))
 menu_clicked = False
@@ -53,12 +52,12 @@ def output():
 
 
 def draw_next_num():
-    pygame.draw.rect(screen, (250, 250, 250), (110, 110, 130, 30))
+    pygame.draw.rect(screen, (250, 250, 250), (100, 100, 150, 50))
     background = pygame.image.load("back1.png").convert_alpha()
     screen.blit(background, (154, 86))
     font = pygame.font.SysFont('microsoftyaheimicrosoftyaheiui', 16)
     next_text = font.render("下一个", 2, (119, 126, 142))
-    screen.blit(next_text, (180 - next_text.get_width()/2, 165 - next_text.get_height() / 2))
+    screen.blit(next_text, (180 - next_text.get_width() / 2, 165 - next_text.get_height() / 2))
     if stage == -1:
         tile_back = pygame.image.load("tile_back.png").convert_alpha()
         screen.blit(tile_back, (165, 99))
@@ -141,14 +140,14 @@ def judge_max_number(tiles):
 
 def add_tile(situation):
     if situation == "any":
-        empty = get_empty_spaces()   # 开始时随机生成，游戏中受移动方向控制
+        empty = get_empty_spaces()  # 开始时随机生成，游戏中受移动方向控制
     else:
         empty = situation
     chosen = random.choice(empty)
     board[chosen[0]][chosen[1]] = stage
 
 
-def get_next_num():     # 1，2，3，3以上的数概率为105:105:105:15,当最大数大于等于48时开始产生3以上的数
+def get_next_num():  # 1，2，3，3以上的数概率为105:105:105:15,当最大数大于等于48时开始产生3以上的数
     global stage, stage_array
     stage_array = []
     if judge_max_number(board) > 3:
@@ -185,10 +184,10 @@ def rate_control():
                 minus_one += 1
             elif j == -2:
                 minus_two += 1
-    if minus_two > minus_one:       # 1和2的数量差多少就补多少
-        stage_array.extend([-1]*(minus_two - minus_one))
+    if minus_two > minus_one:  # 1和2的数量差多少就补多少
+        stage_array.extend([-1] * (minus_two - minus_one))
     else:
-        stage_array.extend([-2]*(minus_one - minus_two))
+        stage_array.extend([-2] * (minus_one - minus_two))
 
 
 def move_left(a_board):
@@ -275,7 +274,7 @@ def move_right(a_board):
     num = []
     num2 = []
     is_moved = False
-    for i in range(0, 4):   # 1，2合成3，相同合成更高一级
+    for i in range(0, 4):  # 1，2合成3，相同合成更高一级
         for j in range(3, 0, -1):
             if a_board[i][j] == -3 and a_board[i][j - 1] != -3:
                 a_board[i][j], a_board[i][j - 1] = a_board[i][j - 1], a_board[i][j]
@@ -313,7 +312,7 @@ def move_up(a_board):
     num = []
     num2 = []
     is_moved = False
-    for i in range(0, 3):   # 1，2合成3，相同合成更高一级
+    for i in range(0, 3):  # 1，2合成3，相同合成更高一级
         for j in range(0, 4):
             if a_board[i][j] == -3 and a_board[i + 1][j] != -3:
                 a_board[i][j], a_board[i + 1][j] = a_board[i + 1][j], a_board[i][j]
@@ -349,22 +348,22 @@ def move_up(a_board):
 def key_control():
     global running, menu_clicked
     key_list = pygame.key.get_pressed()
-    for event in pygame.event.get():    # 玄学错误 列表二维坐标颠倒
+    for event in pygame.event.get():  # 玄学错误 列表二维坐标颠倒
         if event.type == pygame.QUIT:
             running = False
             pygame.quit()
             sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN:
-            button_clicked = button(event.pos[0], event.pos[1])   # 获得鼠标点击位置
+            button_clicked = button(event.pos[0], event.pos[1])  # 获得鼠标点击位置
             if menu_clicked and not button_clicked[1]:  # 点击菜单按钮后点击其他地方
                 menu_clicked = False
                 pygame.draw.rect(screen, (250, 250, 250), (0, 0, 360, 50))
-            if menu_clicked and button_clicked[1]:      # 点击菜单按钮后点击重试按钮
+            if menu_clicked and button_clicked[1]:  # 点击菜单按钮后点击重试按钮
                 menu_clicked = False
                 main()
-            if button_clicked[0]:                       # 点击菜单按钮
+            if button_clicked[0]:  # 点击菜单按钮
                 menu_clicked = True
-        if event.type == pygame.KEYDOWN:                # W A S D键移动 如果有按下shift则为预览
+        if event.type == pygame.KEYDOWN:  # W A S D键移动 如果有按下shift则为预览
             if event.key == pygame.K_a:
                 if not key_list[pygame.K_LSHIFT]:
                     move_up(board)
@@ -385,16 +384,16 @@ def key_control():
                     move_right(board)
                 else:
                     preview("right")
-            if event.key == pygame.K_ESCAPE:            # ESC键退出
+            if event.key == pygame.K_ESCAPE:  # ESC键退出
                 running = False
                 pygame.quit()
                 sys.exit()
             if event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN:
                 if is_end():
-                    main()    # 结束按enter键重开
+                    main()  # 结束按enter键重开
 
         if event.type == pygame.KEYUP:
-            if event.key == pygame.K_LSHIFT:        # 抬起shift键结束预览
+            if event.key == pygame.K_LSHIFT:  # 抬起shift键结束预览
                 render(board)
                 draw_next_num()
 
@@ -406,7 +405,7 @@ def button(left, top):
     if 45 <= left <= menu.get_width() + 45 and 98 <= top <= menu.get_height() + 98:  # 菜单按钮的位置
         menu_window()
         menu_button = True
-    if 30 <= left <= 90 and 10 <= top <= 40:    # 重试按钮的位置
+    if 30 <= left <= 90 and 10 <= top <= 40:  # 重试按钮的位置
         retry_button = True
     return menu_button, retry_button
 
@@ -447,8 +446,8 @@ def render(a_board):
                 screen.blit(tile_image, location)
             else:
                 tile_image = pygame.image.load(turn(tile) + "a.png").convert_alpha()
-                x = 81 + i * 48 + 18 * i - tile_image.get_width()/2         # 居中对齐
-                y = 254 + j * 72 + 12 * j - 72 + tile_image.get_height()    # 底对齐
+                x = 81 + i * 48 + 18 * i - tile_image.get_width() / 2  # 居中对齐
+                y = 254 + j * 72 + 12 * j + 72 - tile_image.get_height()  # 底对齐
                 screen.blit(tile_image, (x, y))
     pygame.display.update()
 
@@ -464,17 +463,17 @@ def is_end():
     else:
         for i in range(3):
             for j in range(4):
-                if board[i][j] == board[i+1][j] and board[i][j] > -1:
+                if board[i][j] == board[i + 1][j] and board[i][j] > -1:
                     return False
                 else:
                     if board[i][j] + board[i + 1][j] == -3 and board[i + 1][j] * board[i][j] > 0:
                         return False
         for i in range(4):
             for j in range(3):
-                if board[i][j] == board[i][j+1] and board[i][j] > -1:
+                if board[i][j] == board[i][j + 1] and board[i][j] > -1:
                     return False
                 else:
-                    if board[i][j] + board[i][j+1] == -3 and board[i][j+1] * board[i][j] > 0:
+                    if board[i][j] + board[i][j + 1] == -3 and board[i][j + 1] * board[i][j] > 0:
                         return False
         return True
 
@@ -482,13 +481,19 @@ def is_end():
 def score():
     sum_score = 0
     pygame.draw.rect(screen, (250, 250, 250), (0, 0, 360, 200))
-    for i in board:
-        for j in i:
-            if j >= 0:
-                sum_score += 3 ** (j + 1)
+    font = pygame.font.SysFont('microsoftyaheimicrosoftyaheiui', 25)
+    for i, array in enumerate(board):
+        for j, tile in enumerate(array):
+            if tile >= 0:
+                x = 57 + i * 48 + 18 * i
+                y = 254 + j * 72 + 12 * j
+                tile_score = 3 ** (tile + 1)
+                sum_score += tile_score
+                score_image = font.render("+" + str(tile_score), 2, (255, 197, 63))
+                screen.blit(score_image, (x - score_image.get_width() / 2 + 23, y - score_image.get_height() / 2))
     font = pygame.font.SysFont('comicsans', 80)
     next_text = font.render(str(sum_score), 2, (0, 0, 0))
-    screen.blit(next_text, (180 - next_text.get_width()/2, 100 - next_text.get_height() / 2))
+    screen.blit(next_text, (180 - next_text.get_width() / 2, 100 - next_text.get_height() / 2))
     pygame.display.update()
 
 
@@ -500,12 +505,12 @@ def end_game():
             for j, tile in enumerate(array):
                 if tile != judge_max_number(board):
                     tile_image = pygame.image.load(turn(tile) + "b.png").convert_alpha()
-                    x = 81 + i * 48 + 18 * i - tile_image.get_width() / 2     # 居中对齐
-                    y = 254 + j * 72 + 12 * j - 72 + tile_image.get_height()  # 底对齐
+                    x = 81 + i * 48 + 18 * i - tile_image.get_width() / 2  # 居中对齐
+                    y = 254 + j * 72 + 12 * j + 72 - tile_image.get_height()  # 底对齐
                     screen.blit(tile_image, (x, y))
         font = pygame.font.SysFont('microsoftyaheimicrosoftyaheiui', 40)
         next_text = font.render("动不了了!", 2, (119, 126, 142))
-        screen.blit(next_text, (255 - next_text.get_width()/2, 100 - next_text.get_height() / 2))
+        screen.blit(next_text, (255 - next_text.get_width() / 2, 100 - next_text.get_height() / 2))
         pygame.display.update()
         pygame.time.wait(2000)
         score()
